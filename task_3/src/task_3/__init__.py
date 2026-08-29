@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
 import re
@@ -7,16 +8,95 @@ class ItemStatus(Enum):
     CHECKED_OUT = 2
     LOST = 3    
 
-class LibraryItem:
+class Library:
+
+    def __init__(self):
+        self.database = Database()
+        self.items:list[LibraryItem] = []
+
+    def input_file(self):
+        data_list = self.database.from_dict()
+        for data in data_list:
+            data["id"] = len(self.items)
+            self.items.append(Library.create_item(data))
+
+    def checkout(self, item_id:int):
+        if item_id >= len(self.items) or item_id < 0:
+            raise ValueError("Item does not exist")
+        self.items[item_id].checkout()
+        
+    def return_item(self, item_id:int):
+        if item_id >= len(self.items) or item_id < 0:
+            raise ValueError("Item does not exist")
+        self.items[item_id].return_item()
+
+    def mark_lost(self, item_id:int):
+        if item_id >= len(self.items) or item_id < 0:
+            raise ValueError("Item does not exist")
+        self.items[item_id].mark_lost()
+
+    def find_by_title(self, title:str):
+        for item in self.items:
+            if item.title.lower() == title.lower():
+                return str(item)
+        return "There is no item with this title"
+
+    @classmethod
+    def create_item(cls, data:dict):
+        return LibraryItem.from_dict(data)
+
+    def add_item(self, data:dict):
+        data["id"] = len(self.items)
+        data["status"] = ItemStatus.AVAILABLE
+        self.items.append(Library.create_item(data))
+
+    def file_output(self):
+        self.database.to_dict(self.items)
+
+    def list_available(self):
+        for item in sorted(self.items):
+            if item.status == ItemStatus.AVAILABLE:
+                print(str(item))
+
+class Database:
+
+    def __init__(self):
+        self.file_path = Path(__file__).parent / "database.txt"
+    
+    def from_dict(self):
+        data_list:dict[str] = []
+        if not self.file_path.exists():
+            return data_list
+        with open(self.file_path, "r") as f:
+            for line in f:
+                if not line:
+                    continue    
+                words = [word.strip() for word in re.split(r'[|=]', line)]
+                data = dict(zip(words[0::2], words[1::2]))
+                data_list.append(data)
+        return data_list
+
+    def to_dict(self, items):
+        with open(self.file_path, "w") as f:
+            for item in items:
+                f.write(repr(item)+"\n")
+
+class LibraryItem(ABC):
     loan_days:int
-    _status:ItemStatus
-    id:int
-    title:str
+    _registry = {}
 
     def __init__(self, id:int, title:str, status:ItemStatus):
+        id = int(id)
         self.id = id
         self.title = title
-        self._status = ItemStatus[status]
+        if isinstance(status, str):
+            self._status = ItemStatus[status]
+        else:
+            self._status = status
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._registry[cls.__name__] = cls
 
     def __lt__(self, other:"LibraryItem"):
         return self.title < other.title
@@ -24,10 +104,6 @@ class LibraryItem:
     @property
     def status(self) -> ItemStatus:
         return self._status
-    
-    @status.setter
-    def status(self, new_status:ItemStatus):
-        self._status = new_status
 
     def checkout(self):
         if self._status != ItemStatus.AVAILABLE:
@@ -46,23 +122,8 @@ class LibraryItem:
         print(f"Item {self.id} is lost")
 
     @classmethod
-    def from_dict(cls, library:list["LibraryItem"]):
-        file_path = Path(__file__).parent / "database.txt"
-        with open(file_path, "r") as f:
-            for line in f:
-                if not line:
-                    continue    
-                words = [word.strip() for word in re.split(r'[|=]', line)]
-                data = dict(zip(words[2::2], words[3::2]))
-                data["id"] = len(library)
-                if words[1] == "Book":
-                    library.append(Book(**data))
-                elif words[1] == "DVD":
-                    library.append(DVD(**data))
-                elif words[1] == "Magazine":
-                    library.append(Magazine(**data))
-                else:
-                    raise TypeError("Library Item Type does not exist")
+    def from_dict(cls, data:dict):
+        return cls._registry[data["type"]].from_dict(data)
 
 class Book(LibraryItem):
     loan_days = 21
@@ -74,8 +135,15 @@ class Book(LibraryItem):
         self.isbn = isbn
         self.author = author
 
-    def __repr__(self):
+    def __str__(self):
         return f"ID: #{self.id}, {self.title} (Book) - {self._status.name}"
+
+    def __repr__(self):
+        return f"type=Book|title={self.title}|author={self.author}|isbn={self.isbn}|status={self.status.name}"
+
+    @classmethod
+    def from_dict(cls, data):
+        return Book(data["id"], data["title"], data["author"], data["isbn"], data["status"])
     
     @staticmethod
     def validateISBN(isbn:str):
@@ -94,8 +162,15 @@ class DVD(LibraryItem):
         super().__init__(id, title, status)
         self.director = director
 
-    def __repr__(self):
+    def __str__(self):
         return f"ID: #{self.id}, {self.title} (DVD) - {self._status.name}"
+
+    def __repr__(self):
+        return f"type=DVD|title={self.title}|director={self.director}|status={self.status.name}"
+
+    @classmethod
+    def from_dict(cls, data):
+        return DVD(data["id"], data["title"], data["director"], data["status"])
 
 class Magazine(LibraryItem):
     loan_days = 14
@@ -104,27 +179,41 @@ class Magazine(LibraryItem):
         super().__init__(id, title, status)
         self.issue = issue
 
-    def __repr__(self):
+    def __str__(self):
         return f"ID: #{self.id}, {self.title} (Magazine) - {self._status.name}"
+    
+    def __repr__(self):
+        return f"type=Magazine|title={self.title}|issue={self.issue}|status={self.status.name}"
+
+    @classmethod
+    def from_dict(cls, data):
+        return Magazine(data["id"], data["title"], data["issue"], data["status"])
 
 def main() -> None:
-    library:LibraryItem = []
-    LibraryItem.from_dict(library)
+    library = Library()
+    library.input_file()
     while True:
-        query = int(input("Query type (1/2/3/4): ").strip())
-        if query == 4:
-            for item in library:
-                print(repr(item))
-            continue
-        item_id = int(input("Item ID: ").strip())
-        if item_id >= len(library):
-            raise("Item does not exist")
-        if query == 1:
-            library[item_id].checkout()
-        elif query == 2:
-            library[item_id].return_item()
-        elif query == 3:
-            library[item_id].mark_lost()
+        query = int(input("Query type (1/2/3/4/5/6/7): ").strip())
+        if query <= 3:
+            item_id = int(input("Item ID: ").strip())
+            if query == 1:                              #Checkout item
+                library.checkout(item_id)
+            elif query == 2:                            #Return item
+                library.return_item(item_id)
+            elif query == 3:                            #Mark lost
+                library.mark_lost(item_id)
+        elif query == 4:                                #List all available items
+            library.list_available()
+        elif query == 5:                                #Find library item by title
+            title = input("Library item title: ").strip()
+            print(library.find_by_title(title))
+        elif query == 6:                                #Add item
+            line = input("Library item data: ").strip()
+            words = [word.strip() for word in re.split(r'[|=]', line)]
+            data = dict(zip(words[0::2], words[1::2]))
+            library.add_item(data)
+        elif query == 7:                                #Output items into file
+            library.file_output()
         else:
             raise ValueError("Invalid query type")
 
