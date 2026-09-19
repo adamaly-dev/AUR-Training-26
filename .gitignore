@@ -223,3 +223,7 @@ build/
 install/
 log/
 .pixi/
+
+#Videos
+new_vid.avi
+video.mp4

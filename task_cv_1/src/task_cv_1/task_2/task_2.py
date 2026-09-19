@@ -35,15 +35,15 @@ class PolygonTracker:
         while True:
             success, frame = self.vid.read()
             if success:
-                frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-                self.detect(frame)
+                frame_hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+                self.detect(frame_hsv, frame)
             else:
                 break
 
         self.vid.release()
         self.video_writer.release()
 
-    def detect(self, frame):
+    def detect(self, frame, frame_bgr):
         blurred = cv.medianBlur(frame, 3)
         red_mask = self.get_red_mask(blurred)
         blue_mask = self.get_blue_mask(blurred)
@@ -63,10 +63,18 @@ class PolygonTracker:
 
                 perimeter = cv.arcLength(contour, True)
                 points = cv.approxPolyDP(contour, 0.02 * perimeter, True)
+
+                M = cv.moments(points)
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
                 
                 if (i == 0) and (len(points) > 6):
+                    frame_bgr = cv.drawContours(frame_bgr, [points], 0, (0, 255, 0), 2)
+                    cv.putText(frame_bgr, "Red Circle", (cx-50, cy), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
                     current_red_circle += 1
                 elif (i == 1) and (len(points) == 4):
+                    frame_bgr = cv.drawContours(frame_bgr, [points], 0, (0, 255, 0), 2)
+                    cv.putText(frame_bgr, "Blue Square", (cx-50, cy), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
                     current_blue_square += 1
             i += 1
 
@@ -77,17 +85,13 @@ class PolygonTracker:
 
         self.prev_frame = [current_blue_square, current_red_circle]
 
-        self.draw(frame)
+        self.draw(frame_bgr)
 
     def draw(self, frame):
-        new_frame = frame.copy()                
+        cv.putText(frame, f"Blue Squares: {self.blue_square}", (5, self.height-5), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+        cv.putText(frame, f"Red Circles: {self.red_circle}", (5, self.height-55), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
-        new_frame = cv.cvtColor(new_frame, cv.COLOR_HSV2BGR)
-
-        cv.putText(new_frame, f"Blue Squares: {self.blue_square}", (5, self.height-5), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
-        cv.putText(new_frame, f"Red Circles: {self.red_circle}", (5, self.height-55), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
-
-        self.video_writer.write(new_frame)
+        self.video_writer.write(frame)
 
 
 def main():
