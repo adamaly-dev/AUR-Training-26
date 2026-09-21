@@ -1,0 +1,21 @@
+[project]
+name = "task-pyqt-2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Adam Aly", email = "adamaly243@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python>=5.0.0.93",
+    "pyqt6>=6.11.0",
+    "pyside6>=6.11.2",
+]
+
+[project.scripts]
+task-pyqt-2 = "task_pyqt_2:main"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13.0"]
+build-backend = "uv_build"
