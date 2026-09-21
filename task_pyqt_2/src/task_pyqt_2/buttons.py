@@ -11,8 +11,28 @@ class Buttons(QWidget):
         super().__init__()
 
         self._layout = QHBoxLayout(self)
+        self._toggle_state = 0
         self._toggle = QPushButton('Start')
         self._reset = QPushButton('Reset')
 
         self._layout.addWidget(self._toggle)
         self._layout.addWidget(self._reset)
+
+        self._toggle.clicked.connect(self._b1_clicked)
+        self._reset.clicked.connect(self._b2_clicked)
+
+    def _b1_clicked(self):
+        if self._toggle_state == 0:
+            self.start.emit()
+        else:
+            self.pause.emit()
+    
+    def _b2_clicked(self):
+        self.reset.emit()
+
+    def _toggle_states(self, set_state):
+        self._toggle_state = set_state
+        if self._toggle_state == 0:
+            self._toggle.setText('Start')
+        else:
+            self._toggle.setText('Pause')

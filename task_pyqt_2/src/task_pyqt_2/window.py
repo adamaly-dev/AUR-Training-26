@@ -18,6 +18,9 @@ class Window(QMainWindow):
         self._layout.addWidget(self._stack)
         self._layout.addWidget(self._buttons)
 
+        self._buttons.start.connect(self._stack.start_timer)
+        self._stack.time_running.connect(self._buttons._toggle_states)
+
         self.show()
 
         
