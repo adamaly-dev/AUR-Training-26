@@ -23,9 +23,8 @@ class Window(QMainWindow):
         self._buttons.pause.connect(self._stack.pause_timer)
 
         self._buttons.reset.connect(self._stack.reset_timer)
-        self._buttons.reset.connect(self._buttons.return_to_initial_state)
 
-        self._stack.time_running.connect(self._buttons._toggle_states)
+        self._stack.time_running.connect(self._buttons.toggle_states)
 
         self.show()
 
