@@ -30,9 +30,16 @@ class Buttons(QWidget):
     def _b2_clicked(self):
         self.reset.emit()
 
-    def _toggle_states(self, set_state):
-        self._toggle_state = set_state
+    def _toggle_states(self, time_stop=-1):
+        if time_stop == -1:
+            return
+        
+        self._toggle_state = not self._toggle_state
         if self._toggle_state == 0:
             self._toggle.setText('Start')
         else:
             self._toggle.setText('Pause')
+
+    def return_to_initial_state(self):
+        self._toggle_state = 0
+        self._toggle.setText('Start')

@@ -19,16 +19,18 @@ class Stack(QStackedWidget):
         validator = QIntValidator(0, 3599, self)
 
         self._line_edit.setValidator(validator)
+        self._line_edit.textChanged.connect(self.update_time)
 
         self._remaining_time = 0
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
 
-    def _time_stopped(self):
-        self.time_stopped.emit(True)
-        self.setCurrentIndex(0)
+    def update_time(self):
+        if len(self._line_edit.text()) == 0:
+            return
+        self._remaining_time = int(self._line_edit.text())
 
-    def output_label(self):
+    def update_label(self):
         m, s = self._remaining_time//60, self._remaining_time%60
         m_s = str(m)
         s_s = str(s)
@@ -39,16 +41,29 @@ class Stack(QStackedWidget):
         self._label.setText(f'{m_s}:{s_s}')
 
     def start_timer(self):
-        self._remaining_time = int(self._line_edit.text())
+        if self._remaining_time <= 0:
+            return
+
+        self._line_edit.clear()
         self._timer.setInterval(1000)
         self._timer.start()
-        self.output_label()
+        self.update_label()
         self.setCurrentIndex(1)
         self.time_running.emit(1)
 
+    def pause_timer(self):
+        self._timer.stop()
+        self.time_running.emit(0)
+
+    def reset_timer(self):
+        self.setCurrentIndex(0)
+        self._remaining_time = 0
+        self._timer.stop()
+
     def _tick(self):
         self._remaining_time -= 1
-        self.output_label()
+        self.update_label()
         if self._remaining_time == 0:
             self._timer.stop()
+            self.setCurrentIndex(0)
             self.time_running.emit(0)
