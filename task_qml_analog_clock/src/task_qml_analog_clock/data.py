@@ -22,8 +22,6 @@ class MyData(QObject):
 
     @hour.setter
     def hour(self, new:int):
-        if new >= 12:
-            raise ValueError("Invalid Hour")
         self._hour = new
         self.hours_changed.emit()
 
@@ -33,8 +31,6 @@ class MyData(QObject):
 
     @min.setter
     def min(self, new:int):
-        if new >= 60:
-            raise ValueError("Invalid Minute")
         self._min = new
         self.mins_changed.emit()
         
@@ -44,23 +40,22 @@ class MyData(QObject):
 
     @sec.setter
     def sec(self, new:int):
-        if new >= 60:
-            raise ValueError("Invalid Second")
         self._sec = new
         self.secs_changed.emit()
 
         
     def _increment(self):
-        print(self.hour, self.min, self.sec)
-        self.sec += 1
 
-        if self.sec >= 60:
-            self.sec -= 60
+        if self.sec < 59:
+            self.sec += 1
+        elif self.min < 59:
+            self.sec = 0
             self.min += 1
-
-        if self.min >= 60:
-            self.min -= 60
+        elif self.hour < 11:
+            self.sec = 0
+            self.min = 0
             self.hour += 1
-
-        if self.hour >= 12:
-            self.hour -= 12
+        else:
+            self.sec = 0
+            self.min = 0
+            self.hour = 0

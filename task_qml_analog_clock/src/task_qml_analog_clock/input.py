@@ -51,6 +51,9 @@ class Input(QWidget):
         m = int(self._min.text())
         s = int(self._sec.text())
 
+        if h > 12 or m >= 60 or s >= 60:
+            raise ValueError("Invalid Time")
+
         if h == 12:
             h = 0
 

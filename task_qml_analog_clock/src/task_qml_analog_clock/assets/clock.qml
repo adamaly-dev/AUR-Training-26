@@ -93,7 +93,7 @@ Rectangle{
             anchors.top: parent.top
             anchors.bottom: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            rotation: root.min * 6 + root.sec * 30 / 60
+            rotation: root.min * 6 + root.sec * 6 / 60
             transformOrigin: Item.Bottom
 
             ShapePath{
