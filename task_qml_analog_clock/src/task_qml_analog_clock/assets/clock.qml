@@ -20,6 +20,7 @@ Rectangle{
         radius: width / 2
         border.width: 6
         border.color: '#aaa'
+        color: (palette.window.hsvValue < 0.5 ? '#fff' : '#333')
         anchors.centerIn: root
 
         Repeater{
@@ -41,13 +42,13 @@ Rectangle{
                 Rectangle{
                     width: (parent.index%5 ? 2 : 5)
                     height: (parent.index%5 ? 10 : 12)
-                    color: 'black'
+                    color: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Text{
-                    color: 'black'
+                    color: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
                     text: (parent.index%5 ? '' : (parent.index ? parent.index/5 : 12))
                     font.pixelSize: 16
                     font.bold: true
@@ -63,8 +64,8 @@ Rectangle{
 
         Shape{
             id: hour
-            width: parent.width * 0.04
-            anchors.topMargin: parent.height * 0.15
+            width: parent.width * 0.05
+            anchors.topMargin: parent.height * 0.2
             anchors.top: parent.top
             anchors.bottom: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
@@ -72,9 +73,9 @@ Rectangle{
             transformOrigin: Item.Bottom
 
             ShapePath{
-                strokeColor: 'black'
+                strokeColor: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
                 strokeWidth: 1
-                fillColor: 'black'
+                fillColor: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
 
                 startX: 0
                 startY: hour.height
@@ -96,9 +97,9 @@ Rectangle{
             transformOrigin: Item.Bottom
 
             ShapePath{
-                strokeColor: 'black'
+                strokeColor: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
                 strokeWidth: 1
-                fillColor: 'black'
+                fillColor: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
 
                 startX: 0
                 startY: min.height
@@ -120,15 +121,24 @@ Rectangle{
 
             ShapePath{
                 strokeColor: 'red'
-                strokeWidth: 3
+                strokeWidth: 1.2
                 fillColor: 'red'
 
                 startX: 0
                 startY: sec.height
                 
                 PathLine{x: 0; y: 0}
-                PathLine{x: 0; y: sec.height}
             }
+        }
+
+        Rectangle{
+            width: parent.width*0.06
+            height: parent.height*0.06
+            radius: width / 2
+            color: (palette.window.hsvValue < 0.5 ? 'black' : 'white')
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
 }
