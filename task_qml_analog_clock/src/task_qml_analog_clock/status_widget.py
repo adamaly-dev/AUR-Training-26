@@ -9,7 +9,7 @@ class StatusWidget(QQuickWidget):
                 parent: QWidget | None = None):
         super().__init__(parent)
 
-        self.setInitialProperties({"dataClass": data_bridge})
+        self.setInitialProperties({"clockData": data_bridge})
         
         self.setSource(QUrl.fromLocalFile(get_asset(widget_filepath)))
         

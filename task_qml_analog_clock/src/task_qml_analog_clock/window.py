@@ -10,9 +10,18 @@ class Window(QMainWindow):
 
         self._data = MyData(self)
 
-        self._widget = StatusWidget('clock.qml', self._data)
+        self._clock_widget = StatusWidget('clock.qml', self._data)
+        self._input_widget = Input()
 
-        self.setCentralWidget(self._widget)
+        self._layout = QVBoxLayout()
+
+        self._layout.addWidget(self._clock_widget)
+        self._layout.addWidget(self._input_widget)
+
+        self._central = QWidget()
+        self._central.setLayout(self._layout)
+
+        self.setCentralWidget(self._central)
 
         self.show()
 

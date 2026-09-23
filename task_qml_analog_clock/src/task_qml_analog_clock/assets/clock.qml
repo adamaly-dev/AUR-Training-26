@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Shapes
 
 Rectangle{
-    property int clockData
+    required property int clockData
     property int sec: clockData % 60
     property int min: (clockData / 60) % 60
     property int hour: clockData / 3600
