@@ -5,8 +5,8 @@ class MyData(QObject):
     mins_changed = Signal()
     secs_changed = Signal()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self._hour = 0
         self._min = 0
@@ -15,20 +15,6 @@ class MyData(QObject):
         self._timer.setInterval(1000)
         self._timer.start()
         self._timer.timeout.connect(self._increment)
-
-    def _increment(self):
-        self._sec += 1
-
-        if self._sec >= 60:
-            self._sec -= 60
-            self._min += 1
-
-        if self._min >= 60:
-            self._min -= 60
-            self._hour += 1
-
-        if self._hour >= 12:
-            self._hour -= 12
 
     @Property(int, notify=hours_changed)
     def hour(self):
@@ -39,7 +25,7 @@ class MyData(QObject):
         if new >= 12:
             raise ValueError("Invalid Hour")
         self._hour = new
-        self.hours_changed.emit(self._hour)
+        self.hours_changed.emit()
 
     @Property(int, notify=mins_changed)
     def min(self):
@@ -50,7 +36,7 @@ class MyData(QObject):
         if new >= 60:
             raise ValueError("Invalid Minute")
         self._min = new
-        self.mins_changed.emit(self._min)
+        self.mins_changed.emit()
         
     @Property(int, notify=secs_changed)
     def sec(self):
@@ -61,4 +47,20 @@ class MyData(QObject):
         if new >= 60:
             raise ValueError("Invalid Second")
         self._sec = new
-        self.secs_changed.emit(self._sec)
+        self.secs_changed.emit()
+
+        
+    def _increment(self):
+        print(self.hour, self.min, self.sec)
+        self.sec += 1
+
+        if self.sec >= 60:
+            self.sec -= 60
+            self.min += 1
+
+        if self.min >= 60:
+            self.min -= 60
+            self.hour += 1
+
+        if self.hour >= 12:
+            self.hour -= 12

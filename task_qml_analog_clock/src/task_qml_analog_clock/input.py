@@ -5,8 +5,8 @@ from PySide6.QtGui import QIntValidator
 class Input(QWidget):
     time_submitted = Signal(int, int, int)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self._hour = QLineEdit()
         self._min = QLineEdit()

@@ -10,8 +10,8 @@ class Window(QMainWindow):
 
         self._data = MyData(self)
 
-        self._clock_widget = StatusWidget('clock.qml', self._data)
-        self._input_widget = Input()
+        self._clock_widget = StatusWidget('clock.qml', self._data, self)
+        self._input_widget = Input(self)
 
         self._layout = QVBoxLayout()
 
@@ -23,5 +23,12 @@ class Window(QMainWindow):
 
         self.setCentralWidget(self._central)
 
+        self._input_widget.time_submitted.connect(self._update_time)
+
         self.show()
+
+    def _update_time(self, hour:int, min:int, sec:int):
+        self._data.hour = hour
+        self._data.min = min
+        self._data.sec = sec
 
