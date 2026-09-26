@@ -18,7 +18,7 @@ class Vehicle:
     
     def __init__(self, id):
         self.id = id
-        self.prev_y = 0
+        self.prev_y = -1
         self.cross_1 = None
         self.cross_2 = None
 
@@ -44,9 +44,9 @@ class SpeedDetector:
     BX2:int = 225
     BY:int = 125
 
-    def __init__(self, model_path, video_path):
-        self.model = YOLO(model_path)
+    def __init__(self, model_path:str, video_path:str):
         self.vid = cv.VideoCapture(video_path)
+        self.model = YOLO(model_path)
         self.line_a = SpeedLine(self.AX1, self.AX2, self.AY)
         self.line_b = SpeedLine(self.BX1, self.BX2, self.BY)
         self.fps = self.vid.get(cv.CAP_PROP_FPS)
@@ -54,3 +54,37 @@ class SpeedDetector:
         self.height = int(self.vid.get(cv.CAP_PROP_FRAME_HEIGHT))
         fourcc = cv.VideoWriter_fourcc(*'XVID')
         self.video_writer = cv.VideoWriter("new_vid.avi", fourcc, float(self.fps), (self.width, self.height))
+        self.vehicles:list[Vehicle] = []
+
+    def run(self):
+        current_time = 0.0
+        while True:
+            success, frame = self.vid.read()
+            current_time += 1.0 / self.fps
+            if success:        
+                self.track_frame(frame, current_time)
+            else:
+                break
+
+        self.vid.release()
+        self.video_writer.release()
+
+    def track_frame(self, frame, current_time):
+        results = self.model.track(frame, persist=True, tracker='bytetrack.yaml', conf=0.4)
+        boxes = results[0].boxes
+        new_frame = frame.copy()
+        if boxes.id is not None:
+            for (x1, y1, x2, y2), track_id in zip(boxes.xyxy.int().tolist(), boxes.id.int().tolist()):
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                while track_id > len(self.vehicles):
+                    self.vehicles.append(Vehicle(len(self.vehicles)))
+                self.vehicles[track_id-1].update(cx, cy, current_time, self.line_a, self.line_b)
+
+                color = (0, 255, 0)
+                if self.vehicles[track_id-1].cross_2 != None:
+                    color = (0, 0, 255)
+                cv.rectangle(new_frame, (x1, y1), (x2, y2), color, thickness=1, lineType=cv.LINE_8)
+
+        self.video_writer.write(new_frame)
+        
+        
