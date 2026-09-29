@@ -15,6 +15,7 @@ class SpeedLine:
 
 class Vehicle:
     DISTANCE:float = 9.144
+    MIN_TIME:float = 0.033
     
     def __init__(self, id):
         self.id = id
@@ -32,7 +33,7 @@ class Vehicle:
     def get_speed(self):
         if self.cross_1 == None or self.cross_2 == None:
             return None
-        return self.DISTANCE/(self.cross_2-self.cross_1)*3.6
+        return self.DISTANCE/max(self.cross_2-self.cross_1, self.MIN_TIME)*3.6
         
         
 
@@ -70,7 +71,7 @@ class SpeedDetector:
         self.video_writer.release()
 
     def track_frame(self, frame, current_time):
-        results = self.model.track(frame, persist=True, tracker='bytetrack.yaml', conf=0.4)
+        results = self.model.track(frame, persist=True, tracker='bytetrack.yaml', conf=0.2)
         boxes = results[0].boxes
         new_frame = frame.copy()
         if boxes.id is not None:
@@ -78,12 +79,22 @@ class SpeedDetector:
                 cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
                 while track_id > len(self.vehicles):
                     self.vehicles.append(Vehicle(len(self.vehicles)))
-                self.vehicles[track_id-1].update(cx, cy, current_time, self.line_a, self.line_b)
+                self.vehicles[track_id-1].update(cx, max(y1, y2), current_time, self.line_a, self.line_b)
 
                 color = (0, 255, 0)
+                text = f'ID: {track_id}'
                 if self.vehicles[track_id-1].cross_2 != None:
+                    text = f'ID: {track_id}, {round(self.vehicles[track_id-1].get_speed(), 2)} km/h'
                     color = (0, 0, 255)
+
+                cv.putText(new_frame, text, (min(x1, x2)+5, min(y1, y2)-5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                 cv.rectangle(new_frame, (x1, y1), (x2, y2), color, thickness=1, lineType=cv.LINE_8)
+                cv.circle(new_frame, (cx, max(y1, y2)), 2, color, cv.FILLED)
+
+        cv.putText(new_frame, 'A', (self.AX1+5, self.AY-10), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+        cv.putText(new_frame, 'B', (self.BX1+5, self.BY-10), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+        cv.line(new_frame, (self.AX1, self.AY), (self.AX2, self.AY), (255, 0, 0), thickness=1)
+        cv.line(new_frame, (self.BX1, self.BY), (self.BX2, self.BY), (0, 255, 255), thickness=1)
 
         self.video_writer.write(new_frame)
         
